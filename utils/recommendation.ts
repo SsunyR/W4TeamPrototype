@@ -31,10 +31,10 @@ export function getRecommendations(
   const recommendations: Recommendation[] = [];
 
   for (const doctor of doctors) {
-    let matchScore = 0;
     let reasoning = '';
     let recommendedTests: string[] = [];
     let estimatedTotalCost = doctor.consultationFee.initial;
+    let hasSpecialtyMatch = false;
 
     // 증상과 의사 전문 분야 매칭
     for (const symptom of selectedSymptoms) {
@@ -44,7 +44,7 @@ export function getRecommendations(
       const specialties = symptomToSpecialty[symptom] || [];
       const doctorSpecialty = doctorSpecialties[doctor.name] || [];
 
-      // 전문 분야 매칭 점수 계산
+      // 전문 분야 매칭 확인
       const specialtyMatch = specialties.some(specialty => 
         doctorSpecialty.includes(specialty) || 
         doctor.department.includes(specialty) ||
@@ -52,18 +52,9 @@ export function getRecommendations(
       );
 
       if (specialtyMatch) {
-        matchScore += 30;
+        hasSpecialtyMatch = true;
         reasoning += `${symptom} 증상에 대한 ${doctor.department} 전문의입니다. `;
       }
-
-      // 경험과 권위 점수
-      if (doctor.credentials.length > 3) matchScore += 15;
-      if (doctor.awards.length > 0) matchScore += 10;
-      if (doctor.publications.length > 0) matchScore += 10;
-      if (doctor.mediaAppearances.length > 0) matchScore += 5;
-
-      // 환자 평가 점수
-      matchScore += doctor.rating * 5;
     }
 
     // 비용 계산
@@ -89,13 +80,10 @@ export function getRecommendations(
       continue;
     }
 
-    // 최종 점수 계산
-    const finalScore = Math.min(100, matchScore);
-
-    if (finalScore > 20) { // 최소 매칭 점수
+    // 전문 분야 매칭이 있거나 경험이 풍부한 의사 추천
+    if (hasSpecialtyMatch || doctor.credentials.length > 2) {
       recommendations.push({
         doctor,
-        matchScore: finalScore,
         reasoning: reasoning || `${doctor.name} 원장은 ${doctor.department} 전문의로 ${selectedSymptoms.join(', ')} 증상에 대한 풍부한 경험을 가지고 있습니다.`,
         estimatedTotalCost,
         recommendedTests
@@ -103,8 +91,12 @@ export function getRecommendations(
     }
   }
 
-  // 점수순으로 정렬
-  return recommendations.sort((a, b) => b.matchScore - a.matchScore);
+  // 경험과 자격을 기준으로 정렬 (credentials, awards, publications 순)
+  return recommendations.sort((a, b) => {
+    const scoreA = a.doctor.credentials.length + a.doctor.awards.length + a.doctor.publications.length;
+    const scoreB = b.doctor.credentials.length + b.doctor.awards.length + b.doctor.publications.length;
+    return scoreB - scoreA;
+  });
 }
 
 export function getSymptomSuggestions(input: string): Symptom[] {

@@ -186,9 +186,6 @@ export default function Home() {
                             <span className="font-medium">{recommendation.doctor.rating}</span>
                             <span className="text-gray-500">({recommendation.doctor.reviewCount})</span>
                           </div>
-                          <div className="text-sm text-gray-500">
-                            매칭도: {recommendation.matchScore}%
-                          </div>
                         </div>
                       </div>
 

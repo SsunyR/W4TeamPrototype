@@ -39,7 +39,6 @@ export interface Symptom {
 
 export interface Recommendation {
   doctor: Doctor;
-  matchScore: number;
   reasoning: string;
   estimatedTotalCost: number;
   recommendedTests: string[];
